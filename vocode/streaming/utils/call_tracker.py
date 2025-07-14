@@ -92,14 +92,26 @@ class CallTracker:
         Returns:
             Dictionary containing call timing information or None if session not found
         """
-        if conversation_id not in self._call_sessions:
+        # Try to find the session by conversation_id or by any active session
+        session_key = None
+        if conversation_id in self._call_sessions:
+            session_key = conversation_id
+        else:
+            # Look for any active session (not yet ended)
+            for key, session in self._call_sessions.items():
+                if session['end_time'] is None:
+                    session_key = key
+                    logger.info(f"🔗 Ending call session {key} for conversation {conversation_id}")
+                    break
+        
+        if session_key is None:
             logger.warning(f"Call session {conversation_id} not found for end tracking")
             return None
             
         end_time = time.time()
         end_datetime = datetime.now()
         
-        session = self._call_sessions[conversation_id]
+        session = self._call_sessions[session_key]
         session['end_time'] = end_time
         session['end_datetime'] = end_datetime
         session['duration'] = end_time - session['start_time']
@@ -120,7 +132,7 @@ class CallTracker:
         )
         
         # Clean up the session and return the data
-        call_data = self._call_sessions.pop(conversation_id)
+        call_data = self._call_sessions.pop(session_key)
         return call_data
     
     def get_call_status(self, conversation_id: str) -> Optional[Dict[str, any]]:
