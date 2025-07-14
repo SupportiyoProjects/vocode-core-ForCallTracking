@@ -30,6 +30,7 @@ from vocode.streaming.transcriber.abstract_factory import AbstractTranscriberFac
 from vocode.streaming.transcriber.default_factory import DefaultTranscriberFactory
 from vocode.streaming.utils import create_conversation_id
 from vocode.streaming.utils.events_manager import EventsManager
+from vocode.streaming.utils.call_tracker import call_tracker
 
 
 class AbstractInboundCallConfig(BaseModel, abc.ABC):
@@ -130,6 +131,7 @@ class TelephonyServer:
             )
 
             conversation_id = create_conversation_id()
+            call_tracker.start_call_tracking(conversation_id, twilio_to, twilio_from)
             await self.config_manager.save_config(conversation_id, call_config)
             return get_connection_twiml(base_url=self.base_url, call_id=conversation_id)
 
@@ -148,6 +150,7 @@ class TelephonyServer:
                 direction="inbound",
             )
             conversation_id = create_conversation_id()
+            call_tracker.start_call_tracking(conversation_id, vonage_answer_request.from_, vonage_answer_request.to)
             await self.config_manager.save_config(conversation_id, call_config)
             vonage_client = VonageClient(
                 base_url=self.base_url,
