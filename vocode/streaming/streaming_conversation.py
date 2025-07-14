@@ -67,6 +67,7 @@ from vocode.streaming.utils.create_task import asyncio_create_task
 from vocode.streaming.utils.events_manager import EventsManager
 from vocode.streaming.utils.speed_manager import SpeedManager
 from vocode.streaming.utils.state_manager import ConversationStateManager
+from vocode.streaming.utils.call_tracker import call_tracker
 from vocode.streaming.utils.worker import (
     AbstractWorker,
     AsyncQueueWorker,
@@ -716,6 +717,7 @@ class StreamingConversation(AudioPipeline[OutputDeviceType]):
             await self.synthesizer.set_filler_audios(self.filler_audio_config)
 
         self.agent.start()
+        call_tracker.mark_agent_started(self.id)
         initial_message = self.agent.get_agent_config().initial_message
         if initial_message:
             asyncio_create_task(

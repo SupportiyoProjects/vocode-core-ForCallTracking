@@ -17,6 +17,7 @@ from vocode.streaming.telephony.client.twilio_client import TwilioClient
 from vocode.streaming.telephony.client.vonage_client import VonageClient
 from vocode.streaming.telephony.config_manager.base_config_manager import BaseConfigManager
 from vocode.streaming.utils import create_conversation_id
+from vocode.streaming.utils.call_tracker import call_tracker
 
 
 class OutboundCall:
@@ -85,6 +86,7 @@ class OutboundCall:
 
     async def start(self):
         logger.debug("Starting outbound call")
+        call_tracker.start_call_tracking(self.conversation_id, self.to_phone, self.from_phone)
         self.telephony_id = await self.telephony_client.create_call(
             conversation_id=self.conversation_id,
             to_phone=self.to_phone,
@@ -125,4 +127,5 @@ class OutboundCall:
         await self.config_manager.save_config(self.conversation_id, call_config)
 
     async def end(self):
+        call_tracker.end_call_tracking(self.conversation_id)
         return await self.telephony_client.end_call(self.telephony_id)

@@ -19,6 +19,7 @@ from vocode.streaming.telephony.config_manager.base_config_manager import BaseCo
 from vocode.streaming.transcriber.abstract_factory import AbstractTranscriberFactory
 from vocode.streaming.utils import create_conversation_id
 from vocode.streaming.utils.events_manager import EventsManager
+from vocode.streaming.utils.call_tracker import call_tracker
 
 TelephonyOutputDeviceType = TypeVar(
     "TelephonyOutputDeviceType", bound=Union[TwilioOutputDevice, VonageOutputDevice]
@@ -79,4 +80,5 @@ class AbstractPhoneConversation(StreamingConversation[TelephonyOutputDeviceType]
 
     async def terminate(self):
         self.events_manager.publish_event(PhoneCallEndedEvent(conversation_id=self.id))
+        call_tracker.end_call_tracking(self.id)
         await super().terminate()
