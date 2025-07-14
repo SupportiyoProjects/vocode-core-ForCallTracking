@@ -51,17 +51,29 @@ class CallTracker:
         Args:
             conversation_id: Unique identifier for the conversation
         """
-        if conversation_id not in self._call_sessions:
+        # Try to find the session by conversation_id or by any session that doesn't have agent_started yet
+        session_key = None
+        if conversation_id in self._call_sessions:
+            session_key = conversation_id
+        else:
+            # Look for any active session without agent started (most recent)
+            for key, session in self._call_sessions.items():
+                if not session['agent_started'] and session['end_time'] is None:
+                    session_key = key
+                    logger.info(f"🔗 Linking conversation {conversation_id} to call session {key}")
+                    break
+        
+        if session_key is None:
             logger.warning(f"Call session {conversation_id} not found for agent start tracking")
             return
             
         agent_start_time = time.time()
         agent_start_datetime = datetime.now()
         
-        self._call_sessions[conversation_id]['agent_started'] = True
-        self._call_sessions[conversation_id]['agent_start_time'] = agent_start_time
+        self._call_sessions[session_key]['agent_started'] = True
+        self._call_sessions[session_key]['agent_start_time'] = agent_start_time
         
-        session = self._call_sessions[conversation_id]
+        session = self._call_sessions[session_key]
         call_setup_duration = agent_start_time - session['start_time']
         
         logger.info(
